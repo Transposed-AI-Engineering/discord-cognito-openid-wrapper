@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 const axios = require('axios');
-const btoa = require('btoa');
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -69,9 +68,9 @@ module.exports = (apiBaseUrl, loginBaseUrl) => {
           urls.oauthToken
         }?grant_type=authorization_code&redirect_uri=${COGNITO_REDIRECT_URI}&code=${code}`,
         headers: {
-          Authorization: `Basic ${btoa(
+          Authorization: `Basic ${Buffer.from(
             `${DISCORD_CLIENT_ID}:${DISCORD_CLIENT_SECRET}`
-          )}`
+          ).toString('base64')}`
         }
       }).then(check)
   };
