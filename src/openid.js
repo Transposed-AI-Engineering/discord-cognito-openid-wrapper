@@ -1,12 +1,12 @@
 const { NumericDate } = require('./helpers');
 const crypto = require('./crypto');
-const github = require('./github');
+const discord = require('./discord');
 
 const getJwks = () => ({ keys: [crypto.getPublicKey()] });
 
 const getUserInfo = accessToken =>
   Promise.all([
-    github()
+    discord()
       .getUserDetails(accessToken)
       .then(userDetails => {
         // Here we map the github user response to the standard claims from
@@ -29,7 +29,7 @@ const getUserInfo = accessToken =>
         };
         return claims;
       }),
-    github()
+    discord()
       .getUserEmails(accessToken)
       .then(userData => {
         const primaryEmail = userData.email;
@@ -37,7 +37,7 @@ const getUserInfo = accessToken =>
           throw new Error('User did not have a primary email address');
         }
         const claims = {
-          email: primaryEmail.email,
+          email: primaryEmail,
           email_verified: userData.verified
         };
         return claims;
@@ -45,10 +45,10 @@ const getUserInfo = accessToken =>
   ]).then(claims => claims.reduce((acc, claim) => ({ ...acc, ...claim }), {}));
 
 const getAuthorizeUrl = (client_id, scope, state, response_type) =>
-  github().getAuthorizeUrl(client_id, scope, state, response_type);
+  discord().getAuthorizeUrl(client_id, scope, state, response_type);
 
 const getTokens = (code, state, host) =>
-  github()
+  discord()
     .getToken(code, state)
     .then(discordToken => {
       // GitHub returns scopes separated by commas
@@ -80,7 +80,6 @@ const getTokens = (code, state, host) =>
           scope,
           id_token: idToken
         };
-
         resolve(tokenResponse);
       });
     });

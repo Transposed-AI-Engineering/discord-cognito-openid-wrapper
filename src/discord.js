@@ -1,11 +1,11 @@
-/* eslint-disable no-console */
-const axios = require('axios');
+const axios = require('axios/dist/node/axios.cjs');
+const qs = require('querystring');
+
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
   COGNITO_REDIRECT_URI,
   DISCORD_API_URL
-  // DISCORD_LOGIN_URL
 } = require('./config');
 
 const getApiEndpoints = (apiBaseUrl = DISCORD_API_URL) => ({
@@ -35,9 +35,9 @@ const check = response => {
 };
 
 const discordGet = (url, accessToken) =>
-  axios({
-    method: 'GET',
+  axios.request({
     url,
+    method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`
     }
@@ -61,17 +61,23 @@ module.exports = (apiBaseUrl, loginBaseUrl) => {
       discordGet(urls.userDetails, accessToken).then(check),
     getUserEmails: accessToken =>
       discordGet(urls.userEmails, accessToken).then(check),
-    getToken: code =>
-      axios({
-        method: 'POST',
-        url: `${
-          urls.oauthToken
-        }?grant_type=authorization_code&redirect_uri=${COGNITO_REDIRECT_URI}&code=${code}`,
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${DISCORD_CLIENT_ID}:${DISCORD_CLIENT_SECRET}`
-          ).toString('base64')}`
-        }
-      }).then(check)
+    getToken: code => {
+      const params = qs.stringify({
+        grant_type: 'authorization_code',
+        redirect_uri: COGNITO_REDIRECT_URI,
+        code
+      })
+      const url = urls.oauthToken 
+      return axios
+        .post(url, params, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${Buffer.from(
+              `${DISCORD_CLIENT_ID}:${DISCORD_CLIENT_SECRET}`
+            ).toString('base64')}`
+          }
+        })
+        .then(check);
+    }
   };
 };
